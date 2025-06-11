@@ -225,7 +225,7 @@ class Web3Methods {
 
         const gasUsed = BigInt(receipt.gasUsed);
         const gasPrice = BigInt(tx.gasPrice);
-        const feeBNB = this.web3.utils.fromWei((gasUsed * gasPrice).toString(), 'ether');
+        const fee_bnb = this.web3.utils.fromWei((gasUsed * gasPrice).toString(), 'ether');
 
         const transferEventSig = this.web3.utils.sha3("Transfer(address,address,uint256)");
 
@@ -265,8 +265,8 @@ class Web3Methods {
 
         return {
             txHash,
-            feeBNB,
-            feeUSD: await this.convertBNB(feeBNB),
+            fee_bnb,
+            fee_usd: await this.convertBNB(feeBNB),
             transfers: decodedTransfers
         };
     }
@@ -308,98 +308,99 @@ class Web3Methods {
         }
     }
 
-    async getTxInfo(log) {
-        const txHash = log.transactionHash;
+    async getTxInfo(txHash) {
         const tx = await this.web3.eth.getTransaction(txHash);
         const receipt = await this.web3.eth.getTransactionReceipt(txHash);
 
         if (receipt && receipt.status && receipt.blockNumber) {
-            let {
-                decimals,
-                token0,
-                token1
-            } = await this.getTokenInfo(log.address);
+            const log = receipt.logs.find(el =>
+                el.topics[0] === this.web3.utils.sha3('Transfer(address,address,uint256)')
+            );
 
-            if (token0 && token1) {
-                const gasUsed = BigInt(receipt.gasUsed);
-                const gasPrice = BigInt(tx.gasPrice);
-                const fee_bnb = this.web3.utils.fromWei((gasUsed * gasPrice).toString(), 'ether');
+            console.log(log)
 
-                const swapLog = receipt.logs.find(log =>
-                    log.topics[0] === this.web3.utils.sha3('Swap(address,uint256,uint256,uint256,uint256,address)')
-                );
-
-                if (!swapLog) return null;
-
-                const decoded = this.web3.eth.abi.decodeLog([
-                    { type: 'uint256', name: 'amount0In' },
-                    { type: 'uint256', name: 'amount1In' },
-                    { type: 'uint256', name: 'amount0Out' },
-                    { type: 'uint256', name: 'amount1Out' }
-                ], swapLog.data, swapLog.topics.slice(1));
-
-                const amount0In = decoded.amount0In;
-                const amount1In = decoded.amount1In;
-                const amount0Out = decoded.amount0Out;
-                const amount1Out = decoded.amount1Out;
-
-                let type,
-                    tokenAmount,
-                    bought,
-                    sold,
-                    bought_usd,
-                    sold_usd,
-                    lose_usd;
-
-                token0 = token0.toLowerCase();
-                token1 = token1.toLowerCase();
-
-                if (amount0In > 0n && amount1Out > 0n) {
-                    type = 'BUY';
-
-                    tokenAmount = (amount1Out / BigInt(10n ** BigInt(decimals))).toString();
-
-                    bought = this.web3.utils.fromWei(amount0In.toString(), 'ether');
-                    sold = this.web3.utils.fromWei(amount1Out.toString(), 'ether');
-
-                    bought_usd = await this.convertToken(token0, bought);
-                    sold_usd = await this.convertToken(token1, sold);
-                } else if (amount1In > 0n && amount0Out > 0n) {
-                    type = 'SELL';
-
-                    tokenAmount = (amount1In / BigInt(10n ** BigInt(decimals))).toString();
-
-                    bought = this.web3.utils.fromWei(amount1In.toString(), 'ether');
-                    sold = this.web3.utils.fromWei(amount0Out.toString(), 'ether');
-
-                    bought_usd = await this.convertToken(token1, bought);
-                    sold_usd = await this.convertToken(token0, sold);
-                }
-
-                if (bought_usd && sold_usd) {
-                    lose_usd = bought_usd - sold_usd;
-                }
-
-                return {
-                    address: log.address,
+            if (log) {
+                let {
+                    decimals,
                     token0,
-                    token1,
-                    txHash,
-                    type,
-                    tokenAmount,
-                    bought,
-                    sold,
-                    bought_usd,
-                    sold_usd,
-                    lose_usd,
-                    fee_bnb,
-                    fee_usd: await this.convertBNB(fee_bnb)
-                };
+                    token1
+                } = await this.getTokenInfo(log.address);
+
+                if (log && token0 && token1) {
+                    const gasUsed = BigInt(receipt.gasUsed);
+                    const gasPrice = BigInt(tx.gasPrice);
+                    const fee_bnb = this.web3.utils.fromWei((gasUsed * gasPrice).toString(), 'ether');
+
+                    const decoded = this.web3.eth.abi.decodeLog([
+                        { type: 'uint256', name: 'amount0In' },
+                        { type: 'uint256', name: 'amount1In' },
+                        { type: 'uint256', name: 'amount0Out' },
+                        { type: 'uint256', name: 'amount1Out' }
+                    ], log.data, log.topics.slice(1));
+
+                    const amount0In = decoded.amount0In;
+                    const amount1In = decoded.amount1In;
+                    const amount0Out = decoded.amount0Out;
+                    const amount1Out = decoded.amount1Out;
+
+                    let type,
+                        tokenAmount,
+                        bought,
+                        sold,
+                        bought_usd,
+                        sold_usd,
+                        lose_usd;
+
+                    token0 = token0.toLowerCase();
+                    token1 = token1.toLowerCase();
+
+                    if (amount0In > 0n && amount1Out > 0n) {
+                        type = 'BUY';
+
+                        tokenAmount = (amount1Out / BigInt(10n ** BigInt(decimals))).toString();
+
+                        bought = this.web3.utils.fromWei(amount0In.toString(), 'ether');
+                        sold = this.web3.utils.fromWei(amount1Out.toString(), 'ether');
+
+                        bought_usd = await this.convertToken(token0, bought);
+                        sold_usd = await this.convertToken(token1, sold);
+                    } else if (amount1In > 0n && amount0Out > 0n) {
+                        type = 'SELL';
+
+                        tokenAmount = (amount1In / BigInt(10n ** BigInt(decimals))).toString();
+
+                        bought = this.web3.utils.fromWei(amount1In.toString(), 'ether');
+                        sold = this.web3.utils.fromWei(amount0Out.toString(), 'ether');
+
+                        bought_usd = await this.convertToken(token1, bought);
+                        sold_usd = await this.convertToken(token0, sold);
+                    }
+
+                    if (bought_usd && sold_usd) {
+                        lose_usd = bought_usd - sold_usd;
+                    }
+
+                    return {
+                        address: swapLog.address,
+                        token0,
+                        token1,
+                        txHash,
+                        type,
+                        tokenAmount,
+                        bought,
+                        sold,
+                        bought_usd,
+                        sold_usd,
+                        lose_usd,
+                        fee_bnb,
+                        fee_usd: await this.convertBNB(fee_bnb)
+                    };
+                }
             }
         } else {
             this.enqueue({
                 action: 'getTxInfo',
-                data: log
+                data: txHash
             });
         }
 
@@ -437,10 +438,10 @@ class Web3Methods {
                             const to = '0x' + log.topics[2].slice(26).toLowerCase();
 
                             if (true || walletSet.has(from) || walletSet.has(to)) {
-                                this.enqueue({
+                                /*this.enqueue({
                                     action: 'getTxInfo',
-                                    data: log
-                                });
+                                    data: log.transactionHash
+                                });*/
                             }
 
                             await sleep(1000);

@@ -141,6 +141,14 @@ const commands = async (ctx, next) => {
                         response_message = messages.userInfo(user.lang, check);
                     }
                 }
+
+                if (match[0] === '/check') {
+                    const res = await web3Service.getTxInfo(match[1]);
+
+                    console.log('[check]', res)
+
+                    await ctx.replyWithHTML(JSON.stringify(res));
+                }
             }
         }
 
