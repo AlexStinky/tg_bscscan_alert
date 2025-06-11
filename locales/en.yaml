@@ -1,0 +1,20 @@
+start_message: 'Hello!'
+
+walletAdded_message: 'Wallet is added!'
+
+monitor_message: '${tx} - ${gasFee}'
+
+startMonitor_button: 'Monitor'
+stopMonitor_button: 'Stop monitor'
+
+done_button: 'Done'
+confirm_button: 'Confirm'
+back_button: 'Back'
+close_button: 'Close'
+cancel_button: 'Cancel'
+
+user_url: '<a href="tg://user?id=${id}">${username}</a>'
+
+bot_url: 'https://t.me/${username}?start=${query}'
+
+channel_url: '<a href="${url}">${title}</a>'

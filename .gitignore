@@ -1,0 +1,14 @@
+/node_modules
+/files/qr/*
+
+package-lock.json
+
+.env
+
+authorized_keys
+id_*
+
+pass.txt
+
+config.json
+config.py
