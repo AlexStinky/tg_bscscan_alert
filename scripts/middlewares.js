@@ -143,7 +143,7 @@ const commands = async (ctx, next) => {
                 }
 
                 if (match[0] === '/check') {
-                    const res = await web3Service.getTxInfo(match[1]);
+                    const res = await web3Service.getTxInfo(match[1], '0x5341e6629fE0E12bDCb2f9d1f130F45331bc8348');
 
                     console.log('[check]', res)
 
