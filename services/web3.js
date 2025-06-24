@@ -242,18 +242,30 @@ class Web3Methods {
                             }
                         }
                     );
+                    const temp = data.pairs.reduce((acc, el) => {
+                        if (el.dexId === 'pancakeswap' &&
+                            el.baseToken.address.toLowerCase() === address &&
+                            el.quoteToken.symbol === 'USDT') {
+                                acc = el;
+                        } else if (!acc && el.baseToken.address.toLowerCase() === address &&
+                            el.quoteToken.symbol.includes('USD')) {
+                                acc = el;
+                        }
 
-                    console.log(data)
+                        return acc;
+                    }, null);
 
-                    if (amount) {
-                        usd = data.pairs[0].priceUsd;
+                    if (temp) {
+                        if (amount) {
+                            usd = temp.priceUsd;
+                        }
+
+                        if (!this.CONTRACT_ADDRESSES.includes(address)) {
+                            this.CONTRACT_ADDRESSES[this.CONTRACT_ADDRESSES.length] = address;
+                        }
+
+                        this.CURRENCY_RATES['TOKENS'][address] = { usd: temp.priceUsd };
                     }
-
-                    if (!this.CONTRACT_ADDRESSES.includes(address)) {
-                        this.CONTRACT_ADDRESSES[this.CONTRACT_ADDRESSES.length] = address;
-                    }
-
-                    this.CURRENCY_RATES['TOKENS'][address] = data[address];
                 }
 
                 if (i !== 0 && i % 20 === 0) {
