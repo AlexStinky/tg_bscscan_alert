@@ -107,15 +107,9 @@ class Web3Methods {
                         today.setHours(0);
                         today.setMinutes(0);
 
-                        const wallet = await walletDBService.get({ address: data.address });
-                        const users = await userDBService.getAll({
-                            chat_id: { $in: wallet.chats },
-                            isMonitor: true
-                        });
+                        const tx = await transactionDBService.create(res);
 
-                        await transactionDBService.create(res);
-
-                        if (users.length > 0) {
+                        /*if (users.length > 0) {
                             const all = (await transactionDBService.getAll({
                                 date: {
                                     $gt: today
@@ -147,6 +141,37 @@ class Web3Methods {
                                     commissions_USD: (all.out - all.in).toFixed(2),
                                     BNB: all.BNB,
                                     BNB_USD: all.BNB_USD.toFixed(2)
+                                };
+
+                                for (let user of users) {
+                                    msgs[msgs.length] = {
+                                        chat_id: user.chat_id,
+                                        message: messages.monitor(user.lang, temp)
+                                    };
+                                }
+                            }
+                        }*/
+
+                        if (tx.type === 'SELL') {
+                            const buy = await transactionDBService.get({
+                                address: tx.address,
+                                type: 'BUY',
+                                in_: tx.out_
+                            });
+
+                            if (buy) {
+                                const wallet = await walletDBService.get({ address: tx.address });
+                                const users = await userDBService.getAll({
+                                    chat_id: { $in: wallet.chats },
+                                    isMonitor: true
+                                });
+                                const temp = {
+                                    symbol: buy.symbol,
+                                    address: buy.address,
+                                    amount: buy.in_,
+                                    bought: buy.out_usd,
+                                    sold: tx.in_usd,
+                                    loss: buy.out_usd - tx.in_usd
                                 };
 
                                 for (let user of users) {
@@ -360,6 +385,7 @@ class Web3Methods {
                 if (out_usd && in_usd) {
                     return {
                         address,
+                        symbol: in_.symbol,
                         tx_hash,
                         type,
                         out_: out_.amountFloat,

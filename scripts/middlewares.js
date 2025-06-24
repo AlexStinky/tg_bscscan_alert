@@ -4,7 +4,8 @@ const { sender } = require('../services/sender');
 const { web3Service } = require('../services/web3');
 const {
     userDBService,
-    walletDBService
+    walletDBService,
+    transactionDBService
 } = require('../services/db');
 
 const ADMINS = process.env.ADMINS.split(',');
@@ -123,15 +124,15 @@ const commands = async (ctx, next) => {
 
             if (match[0].includes('/del_')) {
                 const m = match[0].split('_');
-                const _id = m[1];
+                const address = m[1];
 
-                const wallet = await walletDBService.get({ _id });
+                const wallet = await walletDBService.get({ address });
 
                 if (wallet) {
                     if (wallet.chats.length === 1) {
-                        await walletDBService.delete({ _id });
+                        await walletDBService.delete({ _id: wallet._id });
                     } else {
-                        await walletDBService.update({ _id }, {
+                        await walletDBService.update({ _id: wallet._id }, {
                             chats: {
                                 $pull: user.chat_id
                             }
@@ -140,6 +141,52 @@ const commands = async (ctx, next) => {
 
                     response_message = messages.start(user.lang, user);
                     response_message.text = ctx.i18n.t('walletDeleted_message');
+                }
+            }
+
+            if (match[0].includes('/daily_')) {
+                const address = match[0].replace('/daily_', '');
+
+                const today = new Date();
+                today.setHours(0);
+                today.setMinutes(0);
+
+                const wallet = await walletDBService.get({ address });
+
+                if (wallet) {
+                    const all = (await transactionDBService.getAll({
+                        date: {
+                            $gt: today
+                        },
+                        address
+                    })).reduce((acc, el) => {
+                        if (el.type === 'BUY') {
+                            acc.out += el.out_usd;
+                        } else if (el.type === 'SELL') {
+                            acc.in += el.in_usd;
+                        }
+
+                        acc.BNB += el.fee_bnb;
+                        acc.BNB_USD += el.fee_usd;
+
+                        return acc;
+                    }, {
+                        out: 0,
+                        in: 0,
+                        BNB: 0,
+                        BNB_USD: 0
+                    });
+
+                    const temp = {
+                        address: wallet.address,
+                        name: wallet.name,
+                        total_USD: wallet.wanted_volume_per_day,
+                        commissions_USD: (all.out - all.in).toFixed(2),
+                        BNB: all.BNB,
+                        BNB_USD: all.BNB_USD.toFixed(2)
+                    };
+
+                    response_message = messages.daily(user.lang, temp);
                 }
             }
 
@@ -230,6 +277,24 @@ const cb = async (ctx, next) => {
                 }
             }
 
+            if (match[0] === 'daily') {
+                const wallets = await walletDBService.getAll({ chats: user.chat_id });
+
+                response_message = messages.start(user.lang, user, message_id);
+                response_message.text = ctx.i18n.t('myWallets_message', {
+                    data: wallets.reduce((acc, el) => {
+                        acc += ctx.i18n.t('wallet', {
+                            key: 'daily',
+                            id: el.address,
+                            address: el.address,
+                            name: el.name,
+                            volume: el.wanted_volume_per_day
+                        }) + '\n';
+                        return acc;
+                    }, '')
+                });
+            }
+
             if (match[0] === 'wallets') {
                 const wallets = await walletDBService.getAll({ chats: user.chat_id });
 
@@ -237,7 +302,8 @@ const cb = async (ctx, next) => {
                 response_message.text = ctx.i18n.t('myWallets_message', {
                     data: wallets.reduce((acc, el) => {
                         acc += ctx.i18n.t('wallet', {
-                            _id: el._id,
+                            key: 'del',
+                            id: el._id,
                             address: el.address,
                             name: el.name,
                             volume: el.wanted_volume_per_day

@@ -1,16 +1,26 @@
 start_message: 'Hello!'
 
+myWallets_message: 'List of my wallets:
+
+${data}'
+
 monitor_message: '<code>${address}</code> [${name}]
+
+<b>${symbol}</b>: ${amount}
+
+Bought for: ${bought} $
+
+Sold for: ${sold} $
+
+Loss: ${loss}'
+
+daily_message: '<code>${address}</code> [${name}]
 
 Total Volume: ${total_USD} $
 
 Swap Commissions: ${commissions_USD} $
 
 BNB: ${BNB} (${BNB_USD} $)'
-
-myWallets_message: 'List of my wallets:
-
-${data}'
 
 monitorIsActivated_message: 'Monitoring for your wallets is activated!'
 monitorIsDeactivated_message: 'Monitoring for your wallets is deactivated!'
@@ -21,12 +31,12 @@ addWalletsFirst_message: 'Add wallets first!
 
 <b>NAME:BSC_ADDRESS:WANTED_VOLUME_PER_DAY</b>'
 
-wallet: '${address} [${name}] ${volume} $ - <b>/del_${_id}</b>'
-
-startMonitor_button: 'Monitor'
-stopMonitor_button: 'Stop monitor'
+wallet: '${address} [${name}] ${volume} $ - <b>/${key}_${id}</b>'
 
 myWallets_button: 'My Wallets'
+startMonitor_button: 'Monitor'
+stopMonitor_button: 'Stop monitor'
+dailyVolumeReport_button: 'Daily Volume Report'
 
 done_button: 'Done'
 confirm_button: 'Confirm'

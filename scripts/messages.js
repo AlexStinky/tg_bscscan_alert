@@ -68,6 +68,11 @@ const start = (lang, user, message_id = null) => {
         callback_data: 'monitor'
     }];
 
+    inline_keyboard[inline_keyboard.length] = [{
+        text: i18n.t(lang, 'dailyVolumeReport_button'),
+        callback_data: 'daily'
+    }];
+
     message.extra = {
         reply_markup: {
             inline_keyboard
@@ -82,6 +87,25 @@ const monitor = (lang, data) => {
         type: 'text',
         text: i18n.t(lang, 'monitor_message', data),
         extra: {}
+    };
+
+    return message;
+};
+
+const daily = (lang, data) => {
+    const message = {
+        type: 'text',
+        text: i18n.t(lang, 'daily_message', data),
+        extra: {
+            reply_markup: {
+                inline_keyboard: [
+                    [{
+                        text: i18n.t(lang, 'back_button'),
+                        callback_data: 'cancel'
+                    }]
+                ]
+            }
+        }
     };
 
     return message;
@@ -117,5 +141,6 @@ module.exports = {
     text,
     start,
     monitor,
+    daily,
     userInfo
 }
