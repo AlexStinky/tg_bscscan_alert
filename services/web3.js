@@ -235,21 +235,18 @@ class Web3Methods {
                     usd = this.CURRENCY_RATES['TOKENS'][address].usd;
                 } else {
                     const { data } = await axios.get(
-                        'https://api.coingecko.com/api/v3/simple/token_price/binance-smart-chain',
+                        'https://api.dexscreener.com/latest/dex/search',
                         {
                             params: {
-                                contract_addresses: address,
-                                vs_currencies: 'usd'
+                                q: address
                             }
                         }
                     );
 
-                    if (!data.usd) {
-                        return null;
-                    }
+                    console.log(data)
 
                     if (amount) {
-                        usd = data[address].usd;
+                        usd = data.pairs[0].priceUsd;
                     }
 
                     if (!this.CONTRACT_ADDRESSES.includes(address)) {
@@ -259,7 +256,7 @@ class Web3Methods {
                     this.CURRENCY_RATES['TOKENS'][address] = data[address];
                 }
 
-                if (i !== 0 && i % 30 === 0) {
+                if (i !== 0 && i % 20 === 0) {
                     await sleep(60000);
                 }
             } catch (error) {
@@ -267,9 +264,9 @@ class Web3Methods {
 
                 if (error.status === 429) {
                     await sleep(60000);
-                }
 
-                i--;
+                    i--;
+                }
             }
         }
 
