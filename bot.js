@@ -71,11 +71,15 @@ bot.telegram.getMe().then((botInfo) => {
 });
 
 (async () => {
-    /*const fs = require('fs');
+    const fs = require('fs');
 
-    if (!fs.existsSync('./config.json')) {
+    /*if (!fs.existsSync('./config.json')) {
 		fs.writeFileSync('./config.json', fs.readFileSync('./config_example.json'));
     }*/
+
+	if (!fs.existsSync('./files')) {
+		fs.mkdirSync('./files', { recursive: true });
+	}
 
     await sender.create(bot);
 
