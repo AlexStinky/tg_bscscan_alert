@@ -53,13 +53,20 @@ const start = (lang, user, message_id = null) => {
         text: i18n.t(lang, 'start_message'),
         extra: {}
     };
-    let inline_keyboard = [
-        [{
-            text: (user.isMonitor) ?
-                i18n.t(lang, 'stopMonitor_button') : i18n.t(lang, 'startMonitor_button'),
-            callback_data: 'monitor'
-        }]
-    ];
+    let inline_keyboard = [];
+
+    if (user.wallets.length > 0) {
+        inline_keyboard[inline_keyboard.length] = [{
+            text: i18n.t(lang, 'myWallets_button'),
+            callback_data: 'wallets'
+        }];
+    }
+
+    inline_keyboard[inline_keyboard.length] = [{
+        text: (user.isMonitor) ?
+            i18n.t(lang, 'stopMonitor_button') : i18n.t(lang, 'startMonitor_button'),
+        callback_data: 'monitor'
+    }];
 
     message.extra = {
         reply_markup: {

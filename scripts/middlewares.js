@@ -85,13 +85,12 @@ const commands = async (ctx, next) => {
             }
 
             if (web3Service.NEW_WALLET_REG.test(text)) {
-                const [name, address, token_ticker, wanted_volume_per_day] = text.split(':');
+                const [name, address, wanted_volume_per_day] = text.split(':');
 
-                console.log(name, address, token_ticker, wanted_volume_per_day)
+                console.log(name, address, wanted_volume_per_day)
 
                 let wallet = await walletDBService.get({
                     address,
-                    token_ticker,
                     wanted_volume_per_day
                 });
 
@@ -100,7 +99,6 @@ const commands = async (ctx, next) => {
                         chats: [user.chat_id],
                         name,
                         address,
-                        token_ticker,
                         wanted_volume_per_day
                     });
                 } else {
@@ -121,6 +119,28 @@ const commands = async (ctx, next) => {
 
                 response_message = messages.start(user.lang, user);
                 response_message.text = ctx.i18n.t('walletAdded_message');
+            }
+
+            if (match[0].includes('/del_')) {
+                const m = match[0].split('_');
+                const _id = m[1];
+
+                const wallet = await walletDBService.get({ _id });
+
+                if (wallet) {
+                    if (wallet.chats.length === 1) {
+                        await walletDBService.delete({ _id });
+                    } else {
+                        await walletDBService.update({ _id }, {
+                            chats: {
+                                $pull: user.chat_id
+                            }
+                        });
+                    }
+
+                    response_message = messages.start(user.lang, user);
+                    response_message.text = ctx.i18n.t('walletDeleted_message');
+                }
             }
 
             if (user.isAdmin || ADMINS.includes(user.chat_id)) {
@@ -201,12 +221,30 @@ const cb = async (ctx, next) => {
                 if (user.wallets.length > 0 || !isMonitor) {
                     const temp = await userDBService.update({ chat_id: user.chat_id }, { isMonitor }, 'after');
 
-                    response_message = messages.start(user.lang, temp);
+                    response_message = messages.start(user.lang, temp, message_id);
                     response_message.text = (isMonitor) ?
-                        ctx.i18n.t('monitorIsActivated_message') : ctx.i18n.t('monitorIsDeactivated');
+                        ctx.i18n.t('monitorIsActivated_message') : ctx.i18n.t('monitorIsDeactivated_message');
                 } else {
-                    await ctx.replyWithHTML(ctx.i18n.t('addWalletsFirst_message'));
+                    response_message = messages.start(user.lang, user, message_id);
+                    response_message.text = ctx.i18n.t('addWalletsFirst_message');
                 }
+            }
+
+            if (match[0] === 'wallets') {
+                const wallets = await walletDBService.getAll({ chats: user.chat_id });
+
+                response_message = messages.start(user.lang, user, message_id);
+                response_message.text = ctx.i18n.t('myWallets_message', {
+                    data: wallets.reduce((acc, el) => {
+                        acc += ctx.i18n.t('wallet', {
+                            _id: el._id,
+                            address: el.address,
+                            name: el.name,
+                            volume: el.wanted_volume_per_day
+                        }) + '\n';
+                        return acc;
+                    }, '')
+                });
             }
         }
 

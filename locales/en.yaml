@@ -1,10 +1,5 @@
 start_message: 'Hello!'
 
-walletAdded_message: 'Wallet is added!'
-addWalletsFirst_message: 'Add wallets first!
-
-<code>name:address:token_ticker:wanted_volume_per_day</code>'
-
 monitor_message: '<code>${address}</code> [${name}]
 
 Total Volume: ${total_USD} $
@@ -13,8 +8,25 @@ Swap Commissions: ${commissions_USD} $
 
 BNB: ${BNB} (${BNB_USD} $)'
 
+myWallets_message: 'List of my wallets:
+
+${data}'
+
+monitorIsActivated_message: 'Monitoring for your wallets is activated!'
+monitorIsDeactivated_message: 'Monitoring for your wallets is deactivated!'
+
+walletAdded_message: 'Wallet is added!'
+walletDeleted_message: 'Wallet is deleted!'
+addWalletsFirst_message: 'Add wallets first!
+
+<b>NAME:BSC_ADDRESS:WANTED_VOLUME_PER_DAY</b>'
+
+wallet: '${address} [${name}] ${volume} $ - <b>/del_${_id}</b>'
+
 startMonitor_button: 'Monitor'
 stopMonitor_button: 'Stop monitor'
+
+myWallets_button: 'My Wallets'
 
 done_button: 'Done'
 confirm_button: 'Confirm'

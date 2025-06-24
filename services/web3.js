@@ -6,6 +6,8 @@ const BigNumber = require('bignumber.js');
 
 const { Queue } = require('../modules/queue_lifo');
 
+const messages = require('../scripts/messages');
+
 const {
     userDBService,
     walletDBService,
@@ -25,6 +27,8 @@ class Web3Methods {
 
         this.lastBlock = null;
 
+        this.WALLETS_SET = new Set();
+
         this.CURRENCY_RATES = {
             'BNB': {},
             'TOKENS': {}
@@ -32,7 +36,7 @@ class Web3Methods {
 
         this.CONTRACT_ADDRESSES = [];
 
-        this.NEW_WALLET_REG = /^([^:]+):(0x[a-fA-F0-9]{40}):([A-Z0-9]{2,10}):(\d+(\.\d+)?)/g;
+        this.NEW_WALLET_REG = /^([^:]+):(0x[a-fA-F0-9]{40}):(\d+(\.\d+)?)/;
 
         this.CONVERT_BNB_URL = 'https://api.coingecko.com/api/v3/simple/price';
         this.CONVERT_TOKENS_URL = 'https://api.dexscreener.com/latest/dex/tokens/';
@@ -98,6 +102,8 @@ class Web3Methods {
                 try {
                     const res = await this.getTxInfo(data.tx_hash, data.address);
 
+                    console.log(res)
+
                     if (res) {
                         const today = new Date();
                         today.setHours(0);
@@ -119,9 +125,9 @@ class Web3Methods {
                                 address: data.address
                             })).reduce((acc, el) => {
                                 if (el.type === 'BUY') {
-                                    acc.BUY += el.out_usd;
+                                    acc.out += el.out_usd;
                                 } else if (el.type === 'SELL') {
-                                    acc.SELL += el.in_usd;
+                                    acc.in += el.in_usd;
                                 }
 
                                 acc.BNB += el.fee_bnb;
@@ -129,25 +135,28 @@ class Web3Methods {
 
                                 return acc;
                             }, {
-                                BUY: 0,
-                                SELL: 0,
+                                out: 0,
+                                in: 0,
                                 BNB: 0,
                                 BNB_USD: 0
                             });
-                            const temp = {
-                                address: wallet.address,
-                                name: wallet.name,
-                                total_USD: wallet.wanted_volume_per_day,
-                                commissions_USD: all.BUY - all.SELL,
-                                BNB: all.BNB,
-                                BNB_USD: all.BNB_USD
-                            };
 
-                            for (let user of users) {
-                                msgs[msgs.length] = [{
-                                    chat_id: user.chat_id,
-                                    message: messages.monitor(user.lang, temp)
-                                }];
+                            if (all.out > 0 && all.in > 0) {
+                                const temp = {
+                                    address: wallet.address,
+                                    name: wallet.name,
+                                    total_USD: wallet.wanted_volume_per_day,
+                                    commissions_USD: (all.out - all.in).toFixed(2),
+                                    BNB: all.BNB,
+                                    BNB_USD: all.BNB_USD.toFixed(2)
+                                };
+
+                                for (let user of users) {
+                                    msgs[msgs.length] = {
+                                        chat_id: user.chat_id,
+                                        message: messages.monitor(user.lang, temp)
+                                    };
+                                }
                             }
                         }
                     }
@@ -237,6 +246,8 @@ class Web3Methods {
                         }
                     );
 
+                    console.log(data)
+
                     if (amount) {
                         usd = data[address].usd;
 
@@ -306,7 +317,7 @@ class Web3Methods {
         }
       
         const out_ = results.find(r => r.from.toLowerCase() === address.toLowerCase());
-        const in_ = results.find(r => r.to.toLowerCase() === address.toLowerCase());
+        const in_ = results.findLast(r => r.to.toLowerCase() === address.toLowerCase());
       
         return {
             out_,
@@ -356,9 +367,6 @@ class Web3Methods {
     }
 
     async monitorWallets(){
-        const wallets = await walletDBService.getAll({});
-        const walletSet = new Set(wallets.map(w => w.address.toLowerCase()));
-
         if (!this.lastBlock) {
             this.lastBlock = await this.web3.eth.getBlockNumber();
         }
@@ -386,7 +394,9 @@ class Web3Methods {
                                 const from = '0x' + log.topics[1].slice(26).toLowerCase();
                                 const to = '0x' + log.topics[2].slice(26).toLowerCase();
 
-                                if (walletSet.has(from)) {
+                                console.log(from)
+
+                                if (this.WALLETS_SET.has(from)) {
                                     this.enqueue({
                                         action: 'getTxInfo',
                                         data: {
@@ -411,10 +421,17 @@ class Web3Methods {
                 await sleep(10000);
             }
         }
+
+        return await this.monitorWallets();
     }
 }
 
 const web3Service = new Web3Methods();
+
+setInterval(async () => {
+    const wallets = await walletDBService.getAll({});
+    web3Service.WALLETS_SET = new Set(wallets.map(w => w.address.toLowerCase()));
+}, 5000);
 
 setTimeout(async function exchanges() {
     if (web3Service.CONTRACT_ADDRESSES.length > 0) {
