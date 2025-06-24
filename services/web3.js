@@ -259,13 +259,15 @@ class Web3Methods {
                     this.CURRENCY_RATES['TOKENS'][address] = data[address];
                 }
 
-                if (i !== 0 && i % 50 === 0) {
+                if (i !== 0 && i % 30 === 0) {
                     await sleep(60000);
                 }
             } catch (error) {
-                console.log(`[convertToken] ${address}`, error.message);
+                console.log(`[convertToken] ${address}`, error);
 
-                await sleep(1000);
+                if (error.status === 429) {
+                    await sleep(60000);
+                }
 
                 i--;
             }
