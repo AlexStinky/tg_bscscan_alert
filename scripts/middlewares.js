@@ -1,4 +1,7 @@
+const ExcelJS = require('exceljs');
+
 const messages = require('./messages');
+const helper = require('./helper');
 
 const { sender } = require('../services/sender');
 const { web3Service } = require('../services/web3');
@@ -123,8 +126,7 @@ const commands = async (ctx, next) => {
             }
 
             if (match[0].includes('/del_')) {
-                const m = match[0].split('_');
-                const address = m[1];
+                const address = match[0].replace('/del_', '');
 
                 const wallet = await walletDBService.get({ address });
 
@@ -154,39 +156,23 @@ const commands = async (ctx, next) => {
                 const wallet = await walletDBService.get({ address });
 
                 if (wallet) {
-                    const all = (await transactionDBService.getAll({
+                    const transactions = helper.report(await transactionDBService.getAll({
                         date: {
                             $gt: today
                         },
                         address
-                    })).reduce((acc, el) => {
-                        if (el.type === 'BUY') {
-                            acc.out += el.out_usd;
-                        } else if (el.type === 'SELL') {
-                            acc.in += el.in_usd;
-                        }
+                    }), wallet);
 
-                        acc.BNB += el.fee_bnb;
-                        acc.BNB_USD += el.fee_usd;
+                    response_message = messages.daily(user.lang, transactions);
+                }
+            }
 
-                        return acc;
-                    }, {
-                        out: 0,
-                        in: 0,
-                        BNB: 0,
-                        BNB_USD: 0
-                    });
+            if (match[0].includes('/report_')) {
+                const address = match[0].replace('/report_', '');
+                const wallet = await walletDBService.get({ address });
 
-                    const temp = {
-                        address: wallet.address,
-                        name: wallet.name,
-                        total_USD: wallet.wanted_volume_per_day,
-                        commissions_USD: (all.out - all.in).toFixed(2),
-                        BNB: all.BNB,
-                        BNB_USD: all.BNB_USD.toFixed(2)
-                    };
-
-                    response_message = messages.daily(user.lang, temp);
+                if (wallet) {
+                    response_message = messages.report(user.lang, wallet);
                 }
             }
 
@@ -277,22 +263,115 @@ const cb = async (ctx, next) => {
                 }
             }
 
-            if (match[0] === 'daily') {
-                const wallets = await walletDBService.getAll({ chats: user.chat_id });
+            if (match[0] === 'daily' || match[0] === 'report') {
+                if (match[1]) {
+                    if (match[2]) {
+                        const req = (match[1] === 'all') ?
+                            { address: { $in: user.wallets }} : { address: match[1] };
 
-                response_message = messages.start(user.lang, user, message_id);
-                response_message.text = ctx.i18n.t('myWallets_message', {
-                    data: wallets.reduce((acc, el) => {
-                        acc += ctx.i18n.t('wallet', {
-                            key: 'daily',
-                            id: el.address,
-                            address: el.address,
-                            name: el.name,
-                            volume: el.wanted_volume_per_day
-                        }) + '\n';
-                        return acc;
-                    }, '')
-                });
+                        if (match[2] !== 'all') {
+                            const gt = new Date();
+                            gt.setHours(0);
+                            gt.setMinutes(0);
+                            gt.setSeconds(0);
+
+                            if (match[2] === 'month') {
+                                gt.setDate(1);
+                            } else if (match[2] === 'week') {
+                                gt.setDate(gt.getDate() - 7);
+                            }
+
+                            req.date = {
+                                $gt: gt
+                            };
+                        }
+
+                        const transactions = await transactionDBService.getAll(req, {}, { date: 1 });
+
+                        const temp = {};
+
+                        await sender.sendMessage(user.chat_id, {
+                            type: 'edit_text',
+                            message_id,
+                            text: ctx.i18n.t('waitForIt_message'),
+                            extra: {}
+                        });
+
+                        for (let tx of transactions) {
+                            const address = tx.address;
+                            const date = tx.date.toLocaleDateString('ru-RU');
+
+                            if (temp[address]) {
+                                if (temp[address][date]) {
+                                    const length = temp[address][date].length;
+                                    temp[address][date][length] = tx;
+                                } else {
+                                    temp[address][date] = [tx];
+                                }
+                            } else {
+                                temp[address] = {
+                                    [date]: [tx]
+                                };
+                            }
+                        }
+
+                        const workbook = new ExcelJS.Workbook();
+                        const exel_path = `./files/${user.chat_id}.xlsx`;
+
+                        let wallet = {},
+                            i = 0;
+
+                        for (let element of Object.entries(temp)) {
+                            wallet = await walletDBService.get({ address: element[0] });
+
+                            if (wallet) {
+                                const sheet = workbook.addWorksheet(wallet.name + '_' + i);
+
+                                sheet.columns = [
+                                    { header: 'Date', key: 'date' },
+                                    { header: 'Total Volume', key: 'total_USD' },
+                                    { header: 'Spent', key: 'spent' },
+                                    { header: 'BNB', key: 'BNB' },
+                                    { header: 'BNB USD', key: 'BNB_USD' }
+                                ];
+
+                                const t = [];
+
+                                for (let el of Object.entries(element[1])) {
+                                    const report = helper.report(el[1]);
+                                    report.date = el[0];
+
+                                    t[t.length] = report;
+                                }
+
+                                sheet.addRows(t);
+
+                                i++;
+                            }
+                        }
+
+                        await new Promise((response) => workbook.xlsx.writeFile(exel_path).then(() => {
+                            response(true);
+                        }));
+
+                        response_message = messages.report(user.lang, wallet, { source: exel_path });
+                    }
+                } else {
+                    const wallets = await walletDBService.getAll({ chats: user.chat_id });
+
+                    response_message = messages.start(user.lang, user, message_id);
+                    response_message.text = ctx.i18n.t('myWallets_message', {
+                        data: wallets.reduce((acc, el) => {
+                            acc += ctx.i18n.t('wallet', {
+                                key: match[0],
+                                address: el.address,
+                                name: el.name,
+                                volume: el.wanted_volume_per_day
+                            }) + '\n';
+                            return acc;
+                        }, '')
+                    });
+                }
             }
 
             if (match[0] === 'wallets') {
@@ -303,7 +382,6 @@ const cb = async (ctx, next) => {
                     data: wallets.reduce((acc, el) => {
                         acc += ctx.i18n.t('wallet', {
                             key: 'del',
-                            id: el._id,
                             address: el.address,
                             name: el.name,
                             volume: el.wanted_volume_per_day

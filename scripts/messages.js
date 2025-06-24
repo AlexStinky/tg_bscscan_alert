@@ -69,8 +69,18 @@ const start = (lang, user, message_id = null) => {
     }];
 
     inline_keyboard[inline_keyboard.length] = [{
-        text: i18n.t(lang, 'dailyVolumeReport_button'),
+        text: i18n.t(lang, 'daily_button'),
         callback_data: 'daily'
+    }];
+
+    inline_keyboard[inline_keyboard.length] = [{
+        text: i18n.t(lang, 'volumeReport_button'),
+        callback_data: 'report'
+    }];
+
+    inline_keyboard[inline_keyboard.length] = [{
+        text: i18n.t(lang, 'settings_button'),
+        callback_data: 'settings'
     }];
 
     message.extra = {
@@ -111,6 +121,44 @@ const daily = (lang, data) => {
     return message;
 };
 
+const report = (lang, wallet, file = null, message_id = null) => {
+    const message = {
+        type: (message_id) ?
+            'edit_text' : (file) ?
+            'document' : 'text',
+        message_id,
+        file,
+        text: i18n.t(lang, 'selectPeriod_message', {
+            name: wallet.name,
+            address: wallet.address
+        }),
+        extra: {
+            reply_markup: {
+                inline_keyboard: [
+                    [{
+                        text: i18n.t(lang, 'lastWeek_button'),
+                        callback_data: `report-${wallet.address}-week`
+                    }],
+                    [{
+                        text: i18n.t(lang, 'thisMonth_button'),
+                        callback_data: `report-${wallet.address}-month`
+                    }],
+                    [{
+                        text: i18n.t(lang, 'allTime_button'),
+                        callback_data: `report-${wallet.address}-all`
+                    }],
+                    [{
+                        text: i18n.t(lang, 'back_button'),
+                        callback_data: 'cancel'
+                    }],
+                ]
+            }
+        }
+    };
+
+    return message;
+};
+
 const userInfo = (lang, user, message_id = null) => {
     const message = {
         type: (message_id) ? 'edit_text' : 'text',
@@ -142,5 +190,6 @@ module.exports = {
     start,
     monitor,
     daily,
+    report,
     userInfo
 }

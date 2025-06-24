@@ -6,16 +6,13 @@ const TransactionSchema = new Schema({
         type: Date,
         default: Date.now
     },
-    tx_hash: {
-        type: String
-    },
     address: {
         type: String
     },
-    symbol: {
+    tx_hash: {
         type: String
     },
-    tx_hash: {
+    symbol: {
         type: String
     },
     type: {

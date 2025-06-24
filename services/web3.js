@@ -409,7 +409,11 @@ class Web3Methods {
 
     async monitorWallets(){
         if (!this.lastBlock) {
-            this.lastBlock = await this.web3.eth.getBlockNumber();
+            try {
+                this.lastBlock = await this.web3.eth.getBlockNumber();
+            } catch {
+                //...
+            }
         }
 
         while (true) {

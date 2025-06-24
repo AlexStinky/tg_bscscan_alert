@@ -1,4 +1,5 @@
 require('dotenv').config();
+require('./scripts/timer');
 //require('./scripts/logger').start();
 
 const mongoose = require('mongoose');
