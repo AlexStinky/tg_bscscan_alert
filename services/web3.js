@@ -244,7 +244,9 @@ class Web3Methods {
                         }
                     );
 
-                    console.log(data)
+                    if (!data.usd) {
+                        return null;
+                    }
 
                     if (amount) {
                         usd = data[address].usd;
@@ -344,17 +346,19 @@ class Web3Methods {
                     out_usd = await this.convertToken([out_.tokenAddress], out_.amount),
                     in_usd =  await this.convertToken([in_.tokenAddress], in_.amount);
 
-                return {
-                    address,
-                    tx_hash,
-                    type,
-                    out_: out_.amountFloat,
-                    in_: in_.amountFloat,
-                    out_usd,
-                    in_usd,
-                    fee_bnb,
-                    fee_usd: await this.convertBNB(fee_bnb)
-                };
+                if (out_usd && in_usd) {
+                    return {
+                        address,
+                        tx_hash,
+                        type,
+                        out_: out_.amountFloat,
+                        in_: in_.amountFloat,
+                        out_usd,
+                        in_usd,
+                        fee_bnb,
+                        fee_usd: await this.convertBNB(fee_bnb)
+                    };
+                }
             }
         } else {
             this.enqueue({
