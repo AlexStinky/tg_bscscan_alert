@@ -102,8 +102,6 @@ class Web3Methods {
                 try {
                     const res = await this.getTxInfo(data.tx_hash, data.address);
 
-                    console.log(res)
-
                     if (res) {
                         const today = new Date();
                         today.setHours(0);
@@ -250,7 +248,9 @@ class Web3Methods {
 
                     if (amount) {
                         usd = data[address].usd;
+                    }
 
+                    if (!this.CONTRACT_ADDRESSES.includes(address)) {
                         this.CONTRACT_ADDRESSES[this.CONTRACT_ADDRESSES.length] = address;
                     }
 
@@ -261,9 +261,9 @@ class Web3Methods {
                     await sleep(60000);
                 }
             } catch (error) {
-                console.log('[convertToken]', error.message);
+                console.log(`[convertToken] ${address}`, error.message);
 
-                await sleep(10000);
+                await sleep(1000);
 
                 i--;
             }

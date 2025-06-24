@@ -5,7 +5,7 @@ After=network.target
 [Service]
 ExecStart=node bot.js
 ExecReload=node bot.js
-WorkingDirectory=/opt/tg_
+WorkingDirectory=/opt/tg_bscscan_alert
 KillMode=process
 Restart=always
 RestartSec=5
