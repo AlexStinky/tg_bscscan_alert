@@ -1,8 +1,17 @@
 start_message: 'Hello!'
 
 walletAdded_message: 'Wallet is added!'
+addWalletsFirst_message: 'Add wallets first!
 
-monitor_message: '${tx} - ${gasFee}'
+<code>name:address:token_ticker:wanted_volume_per_day</code>'
+
+monitor_message: '<code>${address}</code> [${name}]
+
+Total Volume: ${total_USD} $
+
+Swap Commissions: ${commissions_USD} $
+
+BNB: ${BNB} (${BNB_USD} $)'
 
 startMonitor_button: 'Monitor'
 stopMonitor_button: 'Stop monitor'

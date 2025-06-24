@@ -16,7 +16,7 @@ const { web3Service } = require('./services/web3');
 const DB_CONN = process.env.DB_CONN;
 const BOT_TOKEN = process.env.BOT_TOKEN;
 
-const mongoClient = mongoose.connect(DB_CONN, {
+mongoose.connect(DB_CONN, {
 	useUnifiedTopology: true,
 	useNewUrlParser: true,
 });
@@ -78,14 +78,15 @@ bot.telegram.getMe().then((botInfo) => {
 
     await sender.create(bot);
 
+	await web3Service.run();
 	await web3Service.monitorWallets();
 })()
 
 process.once('SIGINT', async () => {
     await bot.stop();
-    await mongoClient();
+    await mongoose.disconnect();
 });
 process.once('SIGTERM', async () => {
     await bot.stop();
-    await mongoClient();
+    await mongoose.disconnect();
 });

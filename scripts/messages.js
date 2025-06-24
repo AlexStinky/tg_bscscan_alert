@@ -70,13 +70,10 @@ const start = (lang, user, message_id = null) => {
     return message;
 };
 
-const monitor = (lang, tx, receipt, gasFee) => {
+const monitor = (lang, data) => {
     const message = {
         type: 'text',
-        text: i18n.t(lang, 'monitor_message', {
-            tx,
-            gasFee
-        }),
+        text: i18n.t(lang, 'monitor_message', data),
         extra: {}
     };
 
@@ -112,5 +109,6 @@ const userInfo = (lang, user, message_id = null) => {
 module.exports = {
     text,
     start,
+    monitor,
     userInfo
 }

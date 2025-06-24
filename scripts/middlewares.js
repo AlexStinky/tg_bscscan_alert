@@ -196,7 +196,17 @@ const cb = async (ctx, next) => {
             }
 
             if (match[0] === 'monitor') {
-                if (user.wallets.length > 0) {}
+                const isMonitor = !user.isMonitor;
+
+                if (user.wallets.length > 0 || !isMonitor) {
+                    const temp = await userDBService.update({ chat_id: user.chat_id }, { isMonitor }, 'after');
+
+                    response_message = messages.start(user.lang, temp);
+                    response_message.text = (isMonitor) ?
+                        ctx.i18n.t('monitorIsActivated_message') : ctx.i18n.t('monitorIsDeactivated');
+                } else {
+                    await ctx.replyWithHTML(ctx.i18n.t('addWalletsFirst_message'));
+                }
             }
         }
 
