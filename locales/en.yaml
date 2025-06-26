@@ -4,7 +4,9 @@ myWallets_message: 'List of my wallets:
 
 ${data}'
 
-monitor_message: '<code>${address}</code> [${name}]
+monitor_message: '[${name}] <code>${address}</code>
+
+<code>${hash}</code>
 
 <b>${symbol}</b>: ${amount}
 
@@ -18,7 +20,9 @@ daily_message: '[${name}] <code>${address}</code>
 
 Total Volume: ${total_USD} $
 
-Spent: ${spent} $
+Spent: ${spent_USD} $
+
+Received: ${received_USD} $
 
 BNB: ${BNB} (${BNB_USD} $)'
 
