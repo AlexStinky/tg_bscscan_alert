@@ -196,7 +196,7 @@ const commands = async (ctx, next) => {
                 }
 
                 if (match[0] === '/check') {
-                    const res = await web3Service.getTxInfo(match[1], '0x5341e6629fE0E12bDCb2f9d1f130F45331bc8348');
+                    const res = await web3Service.convertToken(['0x55d398326f99059ff775485246999027b3197955']);
 
                     console.log('[check]', res)
 
