@@ -421,7 +421,7 @@ class Web3Methods {
                 const currentBlock = await this.web3.eth.getBlockNumber();
 
                 if (currentBlock > this.lastBlock) {
-                    for (let i = this.lastBlock + 1n; i <= currentBlock; i = i + 1n) {
+                    for (let i = this.lastBlock + 1; i <= currentBlock; i = i + 1) {
                         const logs = await this.web3.eth.getPastLogs({
                             fromBlock: i,
                             toBlock: i,
