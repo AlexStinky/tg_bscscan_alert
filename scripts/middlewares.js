@@ -196,7 +196,8 @@ const commands = async (ctx, next) => {
                 }
 
                 if (match[0] === '/check') {
-                    const res = await web3Service.convertToken(['0x55d398326f99059ff775485246999027b3197955'], 10);
+                    const BigNumber = require('bignumber.js');
+                    const res = await web3Service.convertToken(['0x55d398326f99059ff775485246999027b3197955'], new BigNumber('0.1'));
 
                     console.log('[check]', res)
 
