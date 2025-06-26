@@ -408,20 +408,26 @@ class Web3Methods {
     }
 
     async monitorWallets(){
+        let isRun = true;
+
         if (!this.lastBlock) {
             try {
                 this.lastBlock = await this.web3.eth.getBlockNumber();
-            } catch {
-                //...
+
+                console.log(this.lastBlock)
+            } catch (error) {
+                console.log('[montitorWallets]', error);
+
+                isRun = false;
             }
         }
 
-        while (true) {
+        while (isRun) {
             try {
                 const currentBlock = await this.web3.eth.getBlockNumber();
 
                 if (currentBlock > this.lastBlock) {
-                    for (let i = this.lastBlock + 1; i <= currentBlock; i = i + 1) {
+                    for (let i = this.lastBlock + 1n; i <= currentBlock; i = i + 1n) {
                         const logs = await this.web3.eth.getPastLogs({
                             fromBlock: i,
                             toBlock: i,
@@ -467,7 +473,7 @@ class Web3Methods {
             }
         }
 
-        return await this.monitorWallets();
+        return setTimeout(async () => await this.monitorWallets(), 1000);
     }
 }
 
