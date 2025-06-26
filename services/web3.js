@@ -168,6 +168,7 @@ class Web3Methods {
                                 const temp = {
                                     symbol: buy.symbol,
                                     address: buy.address,
+                                    name: wallet.name,
                                     amount: buy.in_,
                                     bought: buy.out_usd,
                                     sold: tx.in_usd,
