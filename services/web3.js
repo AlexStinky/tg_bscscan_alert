@@ -169,11 +169,11 @@ class Web3Methods {
                                     name: wallet.name,
                                     address: buy.address,
                                     hash: buy.tx_hash,
-                                    symbol: buy.symbol,
+                                    symbol: buy.symbol || '-',
                                     amount: buy.in_,
-                                    bought: buy.out_usd,
-                                    sold: tx.in_usd,
-                                    loss: buy.out_usd - tx.in_usd
+                                    bought: buy.out_usd.toFixed(2),
+                                    sold: tx.in_usd.toFixed(2),
+                                    loss: (buy.out_usd - tx.in_usd).toFixed(2)
                                 };
 
                                 for (let user of users) {
