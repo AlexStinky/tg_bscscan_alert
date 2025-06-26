@@ -6,22 +6,31 @@ const TransactionSchema = new Schema({
         type: Date,
         default: Date.now
     },
+    type: {
+        type: String
+    },
     address: {
         type: String
     },
     tx_hash: {
         type: String
     },
-    symbol: {
+    out_symbol: {
         type: String
     },
-    type: {
+    out_token_address: {
         type: String
     },
-    out_: {
+    in_symbol: {
+        type: String
+    },
+    in_token_address: {
+        type: String
+    },
+    out_amount: {
         type: Number
     },
-    in_: {
+    in_amount: {
         type: Number
     },
     out_usd: {

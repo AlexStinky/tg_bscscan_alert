@@ -156,7 +156,8 @@ class Web3Methods {
                             const buy = await transactionDBService.get({
                                 address: tx.address,
                                 type: 'BUY',
-                                in_: tx.out_
+                                in_token_address: tx.out_token_address,
+                                in_amount: tx.out_amount
                             });
 
                             if (buy) {
@@ -171,7 +172,7 @@ class Web3Methods {
                                     buy_hash: buy.tx_hash,
                                     sell_hash: tx.tx_hash,
                                     symbol: buy.symbol || '-',
-                                    amount: buy.in_,
+                                    amount: buy.in_amount,
                                     bought: buy.out_usd.toFixed(2),
                                     sold: tx.in_usd.toFixed(2),
                                     loss: (buy.out_usd - tx.in_usd).toFixed(2)
@@ -387,13 +388,16 @@ class Web3Methods {
 
                 if (out_usd && in_usd) {
                     return {
-                        address,
-                        symbol: in_.symbol,
-                        tx_hash,
                         type,
-                        out_: out_.amountFloat,
-                        in_: in_.amountFloat,
+                        address,
+                        tx_hash,
+                        out_symbol: out_.symbol,
+                        out_token_address: out_.tokenAddress,
+                        out_amount: out_.amountFloat,
                         out_usd,
+                        in_symbol: in_.symbol,
+                        in_token_address: in_.tokenAddress,
+                        in_amount: in_.amountFloat,
                         in_usd,
                         fee_bnb,
                         fee_usd: await this.convertBNB(fee_bnb)

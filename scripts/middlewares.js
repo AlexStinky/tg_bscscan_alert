@@ -203,6 +203,12 @@ const commands = async (ctx, next) => {
 
                     await ctx.replyWithHTML(JSON.stringify(res));
                 }
+
+                if (match[0] === '/del') {
+                    await transactionDBService.deleteAll({});
+
+                    await ctx.replyWithHTML('Done!');
+                }
             }
         }
 
