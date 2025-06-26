@@ -6,7 +6,10 @@ ${data}'
 
 monitor_message: '[${name}] <code>${address}</code>
 
-<code>${hash}</code>
+Buy hash: <code>${buy_hash}</code>
+
+Sell hash: <code>${sell_hash}</code>
+
 
 <b>${symbol}</b>: ${amount}
 

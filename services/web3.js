@@ -168,7 +168,8 @@ class Web3Methods {
                                 const temp = {
                                     name: wallet.name,
                                     address: buy.address,
-                                    hash: buy.tx_hash,
+                                    buy_hash: buy.tx_hash,
+                                    sell_hash: tx.tx_hash,
                                     symbol: buy.symbol || '-',
                                     amount: buy.in_,
                                     bought: buy.out_usd.toFixed(2),
